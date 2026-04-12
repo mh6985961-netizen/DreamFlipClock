@@ -1,0 +1,62 @@
+<resources>
+
+    <style name="Theme.DreamFlipClock" parent="Theme.Material3.DynamicColors.DayNight.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="Theme.DreamFlipClock.Settings" parent="Theme.Material3.DynamicColors.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">?attr/colorSurface</item>
+    </style>
+
+    <style name="TextAppearance.Settings.ExpandedTitle" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:textSize">32sp</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="fontWeight">500</item>
+    </style>
+
+    <style name="TextAppearance.Settings.CollapsedTitle" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="TextAppearance.Settings.CategoryLabel" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="fontWeight">600</item>
+    </style>
+
+    <style name="ShapeAppearance.Settings.Card.First" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/expressive_radius_inner</item>
+        <item name="cornerSizeTopLeft">@dimen/expressive_radius_outer</item>
+        <item name="cornerSizeTopRight">@dimen/expressive_radius_outer</item>
+    </style>
+
+    <style name="ShapeAppearance.Settings.Card.Middle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/expressive_radius_inner</item>
+    </style>
+
+    <style name="ShapeAppearance.Settings.Card.Last" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/expressive_radius_inner</item>
+        <item name="cornerSizeBottomLeft">@dimen/expressive_radius_outer</item>
+        <item name="cornerSizeBottomRight">@dimen/expressive_radius_outer</item>
+    </style>
+
+    <style name="ShapeAppearance.Settings.Card.Single" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/expressive_radius_outer</item>
+    </style>
+
+    <style name="ShapeAppearance.Settings.MainSwitch" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/expressive_radius_pill</item>
+    </style>
+
+</resources>

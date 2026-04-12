@@ -1,0 +1,196 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Extract Version
+        id: get_version
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION=${VERSION#refs/heads/}
+          VERSION=${VERSION//\//-}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Decode Keystore
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        run: |
+          if [ -n "$SIGNING_KEY" ]; then
+            echo "$SIGNING_KEY" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> $GITHUB_ENV
+          fi
+
+      - name: Build Release APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew assembleRelease
+
+      - name: Rename APK
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+            cp app/build/outputs/apk/release/app-release.apk "artifacts/DreamFlipClock-${{ steps.get_version.outputs.VERSION }}.apk"
+          else
+            cp app/build/outputs/apk/release/app-release-unsigned.apk "artifacts/DreamFlipClock-${{ steps.get_version.outputs.VERSION }}-unsigned.apk"
+          fi
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DreamFlipClock-${{ steps.get_version.outputs.VERSION }}
+          path: artifacts/*.apk
+          if-no-files-found: error
+          retention-days: 1
+
+  changelog:
+    name: Generate Changelog
+    runs-on: ubuntu-latest
+    needs: build
+    outputs:
+      changelog: ${{ steps.github_release.outputs.changelog }}
+      version: ${{ steps.get_version.outputs.VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract Version
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION=${VERSION#refs/heads/}
+          VERSION=${VERSION//\//-}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Changelog
+        id: github_release
+        uses: mikepenz/release-changelog-builder-action@v5
+        with:
+          failOnError: true
+          commitMode: true
+          configurationJson: |
+            {
+              "template": "#{{CHANGELOG}}\n\n<h3>Statistics</h3>\n\n- <b>Number of commits</b>: #{{COMMITS}}\n- <b>Number of changed files</b>: #{{CHANGED_FILES}}\n- <b>Added lines</b>: #{{ADDITIONS}}\n- <b>Deleted lines</b>: #{{DELETIONS}}",
+              "pr_template": "#{{TITLE}} (#{{MERGE_SHA}})",
+              "base_branches": ["main"],
+              "tag_resolver": {
+                "method": "sort"
+              },
+              "categories": [
+                {
+                    "title": "## 🦾 Features",
+                    "labels": ["feat"]
+                },
+                {
+                    "title": "## 🐛 Fixes",
+                    "labels": ["fix"]
+                },
+                {
+                    "title": "## 🚀 Performance",
+                    "labels": ["perf"]
+                },
+                {
+                    "title": "## 📘 Documentation",
+                    "labels": ["docs"]
+                },
+                {
+                    "title": "## 🏗️ Refactorings",
+                    "labels": ["refactor"]
+                },
+                {
+                    "title": "## 🤖 CI",
+                    "labels": ["ci"]
+                },
+                {
+                    "title": "## ⚒️ Build",
+                    "labels": ["build"]
+                },
+                {
+                    "title": "## ⏱️ Tests",
+                    "labels": ["test"]
+                },
+                {
+                    "title": "## 🎨 Style",
+                    "labels": ["style"]
+                },
+                {
+                    "title": "## 🧹 Chore",
+                    "labels": ["chore"]
+                },
+                {
+                    "title": "## ↩️ Reverted",
+                    "labels": ["revert"]
+                },
+                {
+                    "title": "## ❔ Uncategorized",
+                    "labels": []
+                }
+              ],
+              "label_extractor": [
+                {
+                    "pattern": "(.+):(.+)",
+                    "target": "$1",
+                    "on_property": "title"
+                }
+              ],
+              "transformers": [
+                {
+                  "pattern": "(.+):(.+)",
+                  "target": "-$2"
+                }
+              ]
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: changelog
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: DreamFlipClock-${{ needs.changelog.outputs.version }}
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          tag_name: ${{ github.ref }}
+          name: DreamFlipClock ${{ needs.changelog.outputs.version }}
+          body: ${{ needs.changelog.outputs.changelog }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

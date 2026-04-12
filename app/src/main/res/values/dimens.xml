@@ -1,0 +1,11 @@
+<resources>
+    <dimen name="expressive_radius_outer">24dp</dimen>
+    <dimen name="expressive_radius_inner">4dp</dimen>
+    <dimen name="expressive_radius_pill">28dp</dimen>
+
+    <dimen name="expressive_group_gap">2dp</dimen>
+    <dimen name="expressive_category_gap">16dp</dimen>
+
+    <dimen name="expressive_card_padding">20dp</dimen>
+    <dimen name="expressive_main_switch_padding">24dp</dimen>
+</resources>
